@@ -1,21 +1,31 @@
+import java.io.*;
+import java.util.*;
+
 public class Anagrams {
-}
 
-        String inputfile = args[0];
-        System.out.println("Data file: " + inputfile);
+    public static String signature(String word) {
+        char[] chars = word.toCharArray();
+        Arrays.sort(chars);
+        return new String(chars);
+    }
 
-        // HashMap: signature -> list of words
+    public static void main(String[] args) {
+
+        String inputFile = "joyce1922_ulysses-1.text";
+        System.out.println("Data file: " + inputFile);
+
         HashMap<String, ArrayList<String>> D = new HashMap<>();
 
         try {
-            BufferedReader br = new BufferedReader(new FileReader(inputfile));
-            String line;
+            Scanner sc = new Scanner(new File(inputFile), "ISO-8859-1");
 
-            while ((line = br.readLine()) != null) {
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine();
 
-                String[] words = line.split("\\s+");
-
-                for (String w : words) {
+                // Use Scanner again to split words in the line
+                Scanner wordScanner = new Scanner(line);
+                while (wordScanner.hasNext()) {
+                    String w = wordScanner.next();
 
                     // Clean punctuation but keep apostrophes
                     w = w.replaceAll("[.,;:_!\\-()\\[\\]0-9]", "");
@@ -27,40 +37,32 @@ public class Anagrams {
 
                     String key = signature(w);
 
-                    if (!D.containsKey(key)) {
-                        ArrayList<String> list = new ArrayList<>();
-                        list.add(w);
-                        D.put(key, list);
-                    } else {
-                        D.get(key).add(w);
-                    }
+                    D.computeIfAbsent(key, k -> new ArrayList<>()).add(w);
                 }
+                wordScanner.close();
             }
 
-            br.close();
+            sc.close();
 
-        } catch (IOException e) {
-            System.out.println("Error reading file.");
-            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            System.out.println("The file " + inputFile + " was not found.");
         }
 
-        // Print dictionary contents
+        //printing dictinoary contents
         for (String key : D.keySet()) {
             System.out.println(key + " " + D.get(key));
         }
 
         // Write LaTeX output
         try {
-            PrintWriter tex = new PrintWriter(new FileWriter("theAnagrams.tex"));
+            PrintWriter tex = new PrintWriter(new FileWriter("anagrams-1.tex"));
 
             char letter = 'X';
 
             for (String key : D.keySet()) {
-
                 ArrayList<String> list = D.get(key);
 
                 if (list.size() > 1) { // only actual anagrams
-
                     String firstWord = list.get(0);
                     char initial = firstWord.charAt(0);
 
@@ -75,17 +77,13 @@ public class Anagrams {
                     for (String w : list) {
                         tex.print(w + " ");
                     }
-
                     tex.println("\\\\");
                 }
             }
-
             tex.close();
-
         } catch (IOException e) {
-            System.out.println("Error writing LaTeX file.");
+            System.out.println("An error occured writting to the anagrams file");
         }
-
-        System.out.println("Anagram dictionary generated.");
+        System.out.println("Anagram dictionary generated in anagrams-1.tex");
     }
 }
